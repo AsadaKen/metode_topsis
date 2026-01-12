@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SPK TOPSIS Mobile Friendly</title>
+
+<style>
+/* CSS RESET & VARIABLES */
+:root {
+    --primary: #3498db;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --dark: #2c3e50;
+    --light: #f8f9fa;
+    --radius: 8px;
+}
+
+* {
+    box-sizing: border-box; 
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #edf2f4;
+  margin: 0;
+  padding: 15px;
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+h2, h3 {
+  text-align: center;
+  color: var(--dark);
+  margin-bottom: 20px;
+}
+
+/* CONTAINER UTAMA */
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* CARD STYLE */
+.section {
+  background: #fff;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: var(--radius);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  border-top: 5px solid var(--primary);
+}
+
+/* FORM ELEMENTS */
+label {
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: block;
+    color: #555;
+}
+
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: var(--radius);
+  font-size: 16px; /* Mencegah zoom otomatis di iOS */
+}
+
+input:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+/* BUTTONS */
+button {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: none;
+  border-radius: var(--radius);
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  color: white;
+}
+
+button:active { transform: scale(0.98); }
+
+.btn-primary { background-color: var(--primary); }
+.btn-success { background-color: var(--success); }
+.btn-warning { background-color: var(--warning); }
+.btn-danger { background-color: var(--danger); }
+.btn-purple { background-color: #8e44ad; }
+
+/* GRID LAYOUT (Desktop) */
+.grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* TABLE STYLING (Responsive) */
+.table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 15px;
+    border-radius: var(--radius);
+    border: 1px solid #eee;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* Memaksa scroll jika layar kecil */
+}
+
+th, td {
+  border: 1px solid #eee;
+  padding: 12px;
+  text-align: center;
+}
+
+th {
+  background: var(--primary);
+  color: white;
+  white-space: nowrap;
+}
+
+tr:nth-child(even) { background-color: #f8f9fa; }
+
+/* RESPONSIVE MOBILE TWEAKS */
+@media (max-width: 768px) {
+    .grid-2 {
+        grid-template-columns: 1fr; /* Stack ke bawah di HP */
+        gap: 0;
+    }
+    
+    .section {
+        padding: 15px;
+    }
+
+    input, select {
+        margin-bottom: 10px;
+    }
+    
+    /* Input kriteria di dalam tabel rentang */
+    .rentang-row input {
+        min-width: 60px; 
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>📱 SPK TOPSIS Mobile</h2>
+
+    <div class="section">
+        <h3>1. Konfigurasi Kriteria</h3>
+        
+        <div class="grid-2">
+            <div>
+                <label>Jml Kriteria:</label>
+                <input type="number" id="jumlahKriteria" placeholder="Contoh: 4">
+            </div>
+            <div>
+                <label>Jml Rentang:</label>
+                <input type="number" id="jumlahRentang" placeholder="Contoh: 4">
+            </div>
+        </div>
+
+        <button onclick="buatFormKriteria()" class="btn-primary">Buat Form Kriteria</button>
+        
+        <div id="formKriteria"></div>
+        
+        <div style="margin-top: 15px;">
+            <button id="btnSimpanKriteria" onclick="simpanKriteria()" class="btn-success">Simpan Kriteria</button>
+            <button id="btnEditKriteria" onclick="editKriteria()" class="btn-warning" style="display:none;">Edit Kriteria</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>2. Input Data Siswa</h3>
+        
+        <div id="dataSection" style="opacity:0.5; pointer-events:none;">
+            <label>Nama / Alternatif:</label>
+            <input type="text" id="namaData" placeholder="Nama Siswa">
+            
+            <div id="nilaiData"></div>
+            
+            <button id="btnAksiData" onclick="tambahData()" class="btn-primary">Tambah Data</button>
+        </div>
+        
+        <div class="table-wrapper">
+            <table id="tabelData" style="display:none;">
+                <thead><tr id="headerData"></tr></thead>
+                <tbody id="bodyData"></tbody>
+            </table>
+        </div>
+        
+        <hr style="border-top:1px dashed #ccc; margin: 20px 0;">
+        
+        <label>3. Proses Perhitungan:</label>
+        <div class="grid-2">
+            <button onclick="prosesKonversi()" class="btn-purple">1. Konversi</button>
+            <button onclick="mulaiNormalisasi()" class="btn-purple">2. Normalisasi</button>
+            <button onclick="mulaiSolusiJarak()" class="btn-purple">3. Jarak Solusi</button>
+            <button onclick="hitungPreferensi()" class="btn-danger">4. Hasil Akhir</button>
+        </div>
+    </div>
+
+    <div id="outputArea">
+        <div id="tabelKonversi"></div>
+        <div id="tabelR"></div>
+        <div id="tabelV"></div>
+        <div id="tabelIdeal"></div>
+        <div id="tabelJarak"></div>
+        <div id="tabelHasilAkhir"></div>
+    </div>
+
+</div>
+
+<script>
+// ===================================================================================================
+// LOGIKA JAVASCRIPT
+// ===================================================================================================
+
+let kriteria = [];
+let dataPenilaian = [];
+let dataKonversi = [];
+let matriksX = [];
+let matriksR = [];
+let matriksV = [];
+let Aplus = [];
+let Aminus = [];
+let jarak = []; 
+let hasilAkhir = [];
+let modeEditData = -1; 
+
+function buatFormKriteria() {
+  const jumlahKriteria = parseInt(document.getElementById("jumlahKriteria").value);
+  const jumlahRentang = parseInt(document.getElementById("jumlahRentang").value);
+
+  if (!jumlahKriteria || !jumlahRentang) {
+    alert("Isi jumlah kriteria dan rentang dulu!");
+    return;
+  }
+
+  const container = document.getElementById("formKriteria");
+  container.innerHTML = "";
+
+  for (let i = 0; i < jumlahKriteria; i++) {
+    let html = `
+      <div style="margin-top:20px; border:1px solid #ddd; padding:15px; border-radius:8px; background:#f9f9f9;">
+        <label style="color:var(--primary);">Kriteria ${i + 1}</label>
+        
+        <div class="grid-2">
+            <input type="text" class="namaKriteria" placeholder="Nama (misal: Prestasi)">
+            <input type="number" class="bobotKriteria" placeholder="Bobot (W)">
+        </div>
+        
+        <select class="tipeKriteria">
+            <option value="benefit">Benefit (Makin Besar Bagus)</option>
+            <option value="cost">Cost (Makin Kecil Bagus)</option>
+        </select>
+
+        <div class="table-wrapper">
+            <table>
+            <tr style="background:#ddd; color:#333;">
+                <th>Min</th>
+                <th>Max</th>
+                <th>Label</th>
+                <th>Nilai (1-4)</th> 
+            </tr>
+    `;
+
+    for (let j = 0; j < jumlahRentang; j++) {
+      html += `
+        <tr class="rentang-row">
+          <td><input type="number" class="min" style="margin:0;"></td>
+          <td><input type="number" class="max" style="margin:0;"></td>
+          <td><input type="text" class="label" style="margin:0;"></td>
+          <td><input type="number" class="nilaiSkala" style="margin:0;"></td>
+        </tr>
+      `;
+    }
+
+    html += `</table></div></div>`;
+    container.innerHTML += html;
+  }
+}
+
+function simpanKriteria() {
+  kriteria = [];
+  let error = false;
+
+  const fieldsets = document.querySelectorAll("#formKriteria > div"); // Ambil div wrapper
+
+  fieldsets.forEach((fs, idx) => {
+    const nama = fs.querySelector(".namaKriteria").value;
+    const weight = parseFloat(fs.querySelector(".bobotKriteria").value);
+    const tipe = fs.querySelector(".tipeKriteria").value;
+
+    if(!nama || isNaN(weight)) { error = true; return; }
+
+    const rentang = [];
+    const rows = fs.querySelectorAll("table tr");
+
+    rows.forEach((row, i) => {
+      if (i === 0) return; 
+      const inputs = row.querySelectorAll("input");
+      
+      // Ambil nilai rentang
+      rentang.push({
+        min: parseFloat(inputs[0].value),
+        max: inputs[1].value === "" ? Infinity : parseFloat(inputs[1].value),
+        label: inputs[2].value,
+        nilai: parseFloat(inputs[3].value) 
+      });
+    });
+
+    // PENTING: Urutkan rentang dari Min terkecil ke terbesar
+    // Ini menjamin pengecekan 7-9 dilakukan SEBELUM 9-10
+    rentang.sort((a, b) => a.min - b.min);
+
+    kriteria.push({ nama, tipe, weight, rentang });
+  });
+
+  if (error || kriteria.length === 0) {
+      alert("Lengkapi semua nama dan bobot kriteria!");
+      return;
+  }
+
+  alert("Data Kriteria Tersimpan!");
+  disableFormKriteria(true);
+  document.getElementById("btnSimpanKriteria").style.display = "none";
+  document.getElementById("btnEditKriteria").style.display = "inline-block";
+  aktifkanFormData();
+}
+
+function editKriteria() {
+    if(confirm("Edit kriteria akan mereset data hitungan. Lanjut?")) {
+        disableFormKriteria(false);
+        const sectionData = document.getElementById("dataSection");
+        sectionData.style.opacity = "0.5";
+        sectionData.style.pointerEvents = "none";
+        
+        document.getElementById("btnSimpanKriteria").style.display = "inline-block";
+        document.getElementById("btnEditKriteria").style.display = "none";
+        
+        document.getElementById("outputArea").innerHTML = `<div id="tabelKonversi"></div><div id="tabelR"></div><div id="tabelV"></div><div id="tabelIdeal"></div><div id="tabelJarak"></div><div id="tabelHasilAkhir"></div>`;
+    }
+}
+
+function disableFormKriteria(status) {
+    document.querySelectorAll("#formKriteria input, #formKriteria select").forEach(el => el.disabled = status);
+}
+
+function aktifkanFormData() {
+  const section = document.getElementById("dataSection");
+  section.style.opacity = "1";
+  section.style.pointerEvents = "auto";
+
+  const container = document.getElementById("nilaiData");
+  container.innerHTML = "<br><b>Input Nilai Kriteria:</b>";
+
+  kriteria.forEach((k, i) => {
+    container.innerHTML += `
+      <div style="margin-top:10px;">
+          <label>${k.nama}</label>
+          <input type="number" step="any" class="nilaiInput" placeholder="Masukkan angka...">
+      </div>
+    `;
+  });
+}
+
+function tambahData() {
+  const namaInput = document.getElementById("namaData");
+  const nilaiInputs = document.querySelectorAll(".nilaiInput");
+  const btn = document.getElementById("btnAksiData");
+
+  if (!namaInput.value.trim()) { alert("Nama wajib diisi!"); return; }
+
+  let nilaiMentah = {};
+  let error = false;
+
+  nilaiInputs.forEach((input, i) => {
+     let valStr = input.value.replace(',', '.'); // Handle koma jadi titik
+     if(valStr === "") error = true;
+     nilaiMentah[kriteria[i].nama] = parseFloat(valStr);
+  });
+
+  if (error) { alert("Semua nilai harus diisi!"); return; }
+
+  if (modeEditData === -1) {
+      dataPenilaian.push({ nama: namaInput.value, nilaiMentah });
+  } else {
+      dataPenilaian[modeEditData] = { nama: namaInput.value, nilaiMentah };
+      modeEditData = -1; 
+      btn.innerText = "Tambah Data";
+      btn.classList.remove("btn-success");
+      btn.classList.add("btn-primary");
+      alert("Data diupdate!");
+  }
+
+  tampilkanData();
+  namaInput.value = "";
+  nilaiInputs.forEach(i => i.value = "");
+}
+
+function tampilkanData() {
+  const tabel = document.getElementById("tabelData");
+  const header = document.getElementById("headerData");
+  const body = document.getElementById("bodyData");
+
+  tabel.style.display = "table";
+  header.innerHTML = "<th>No</th><th>Nama</th>";
+  kriteria.forEach(k => header.innerHTML += `<th>${k.nama}</th>`);
+  header.innerHTML += "<th>Aksi</th>";
+
+  body.innerHTML = "";
+  dataPenilaian.forEach((d, index) => {
+    let row = `<tr><td>${index + 1}</td><td><b>${d.nama}</b></td>`;
+    kriteria.forEach(k => row += `<td>${d.nilaiMentah[k.nama]}</td>`);
+    row += `
+      <td>
+        <button onclick="prepareEditData(${index})" class="btn-warning" style="padding:5px 10px; width:auto;">Edit</button>
+        <button onclick="hapusData(${index})" class="btn-danger" style="padding:5px 10px; width:auto;">Hapus</button>
+      </td>
+    </tr>`;
+    body.innerHTML += row;
+  });
+}
+
+function prepareEditData(index) {
+  const data = dataPenilaian[index];
+  const inputs = document.querySelectorAll(".nilaiInput");
+  const btn = document.getElementById("btnAksiData");
+
+  document.getElementById("namaData").value = data.nama;
+  inputs.forEach((input, i) => input.value = data.nilaiMentah[kriteria[i].nama]);
+
+  modeEditData = index;
+  btn.innerText = "Update Data";
+  btn.classList.remove("btn-primary");
+  btn.classList.add("btn-success");
+  document.getElementById("dataSection").scrollIntoView({behavior: "smooth"});
+}
+
+function hapusData(index) {
+    if(confirm("Hapus data ini?")) {
+        if(modeEditData === index) {
+            modeEditData = -1;
+            document.getElementById("btnAksiData").innerText = "Tambah Data";
+            document.getElementById("btnAksiData").classList.add("btn-primary");
+        }
+        dataPenilaian.splice(index, 1);
+        tampilkanData();
+    }
+}
+
+// ------------------------------------------------------------------
+// PERBAIKAN LOGIKA UTAMA DI SINI (PROSES KONVERSI)
+// ------------------------------------------------------------------
+function prosesKonversi() {
+  if(dataPenilaian.length === 0) { alert("Input data dulu!"); return; }
+  
+  dataKonversi = [];
+
+  dataPenilaian.forEach(d => {
+    let nilaiBobot = {}; 
+
+    kriteria.forEach(k => {
+      const nilaiAsli = d.nilaiMentah[k.nama];
+      let skalaDitemukan = null;
+
+      // LOGIKA BARU:
+      // 1. TIDAK ADA Math.round (Agar 9.1 terbaca sebagai 9.1)
+      // 2. Karena rentang sudah disort (di fungsi simpanKriteria),
+      //    kita cukup loop dari awal. Rentang pertama yang cocok akan diambil.
+      
+      for (let r of k.rentang) {
+        // Contoh: Rentang A (7-9), Rentang B (9-10)
+        // Input: 9.  -> 9 >= 7 && 9 <= 9 (TRUE). Ambil Rentang A. Break.
+        // Input: 9.1 -> 9.1 >= 7 && 9.1 <= 9 (FALSE). Lanjut..
+        //            -> 9.1 >= 9 && 9.1 <= 10 (TRUE). Ambil Rentang B. Break.
+        
+        if (nilaiAsli >= r.min && nilaiAsli <= r.max) {
+          skalaDitemukan = r.nilai; 
+          break; // Berhenti saat ketemu match pertama (prioritas rentang bawah)
+        }
+      }
+
+      // Handle jika nilai melebihi Max rentang terakhir
+      if (skalaDitemukan === null) {
+          let lastRange = k.rentang[k.rentang.length-1];
+          if(nilaiAsli > lastRange.max) skalaDitemukan = lastRange.nilai; 
+      }
+      
+      // Handle jika nilai kurang dari Min rentang pertama
+      if (skalaDitemukan === null) {
+          let firstRange = k.rentang[0];
+          if(nilaiAsli < firstRange.min) skalaDitemukan = firstRange.nilai;
+      }
+
+      if (skalaDitemukan === null) {
+        alert(`Nilai ${nilaiAsli} pada ${k.nama} tidak masuk rentang!`);
+        return;
+      }
+
+      nilaiBobot[k.nama] = skalaDitemukan;
+    });
+
+    dataKonversi.push({ nama: d.nama, nilaiBobot });
+  });
+
+  tampilkanDataKonversi();
+  bentukMatriksKeputusan();
+}
+
+function tampilkanDataKonversi() {
+  let html = `<div class="section"><h3>Hasil Konversi</h3><div class="table-wrapper"><table>
+    <tr><th>Nama</th>`;
+  kriteria.forEach(k => html += `<th>${k.nama}</th>`);
+  html += `</tr>`;
+
+  dataKonversi.forEach(d => {
+    html += `<tr><td>${d.nama}</td>`;
+    kriteria.forEach(k => html += `<td>${d.nilaiBobot[k.nama]}</td>`);
+    html += `</tr>`;
+  });
+  html += `</table></div></div>`;
+  document.getElementById("tabelKonversi").innerHTML = html;
+}
+
+function bentukMatriksKeputusan() {
+  matriksX = [];
+  dataKonversi.forEach(d => {
+    let row = [];
+    kriteria.forEach(k => row.push(d.nilaiBobot[k.nama]));
+    matriksX.push(row);
+  });
+}
+
+function mulaiNormalisasi() {
+  if (matriksX.length === 0) { alert("Klik Konversi dulu!"); return; }
+  
+  // Normalisasi R
+  matriksR = [];
+  const jmlData = matriksX.length;
+  const jmlKrit = kriteria.length;
+  let penyebut = Array(jmlKrit).fill(0);
+
+  for (let j = 0; j < jmlKrit; j++) {
+    for (let i = 0; i < jmlData; i++) penyebut[j] += Math.pow(matriksX[i][j], 2);
+    penyebut[j] = Math.sqrt(penyebut[j]);
+  }
+
+  for (let i = 0; i < jmlData; i++) {
+    let row = [];
+    for (let j = 0; j < jmlKrit; j++) row.push(matriksX[i][j] / penyebut[j]);
+    matriksR.push(row);
+  }
+  tampilkanMatriks(matriksR, "Matriks Normalisasi (R)", "tabelR");
+
+  // Normalisasi Y (Terbobot)
+  matriksV = [];
+  for (let i = 0; i < jmlData; i++) {
+    let row = [];
+    for (let j = 0; j < jmlKrit; j++) row.push(matriksR[i][j] * kriteria[j].weight);
+    matriksV.push(row);
+  }
+  tampilkanMatriks(matriksV, "Matriks Terbobot (Y)", "tabelV");
+}
+
+function tampilkanMatriks(matriks, judul, id) {
+  let html = `<div class="section"><h3>${judul}</h3><div class="table-wrapper"><table><tr><th>Nama</th>`;
+  kriteria.forEach(k => html += `<th>${k.nama}</th>`);
+  html += `</tr>`;
+  matriks.forEach((row, i) => {
+    html += `<tr><td>${dataKonversi[i].nama}</td>`;
+    row.forEach(val => html += `<td>${val.toFixed(4)}</td>`);
+    html += `</tr>`;
+  });
+  html += `</table></div></div>`;
+  document.getElementById(id).innerHTML = html;
+}
+
+function mulaiSolusiJarak() {
+    if (matriksV.length === 0) { alert("Normalisasi dulu!"); return; }
+    
+    Aplus = []; Aminus = [];
+    for (let j = 0; j < kriteria.length; j++) {
+        const col = matriksV.map(r => r[j]);
+        if (kriteria[j].tipe === "benefit") {
+            Aplus[j] = Math.max(...col); Aminus[j] = Math.min(...col);
+        } else {
+            Aplus[j] = Math.min(...col); Aminus[j] = Math.max(...col);
+        }
+    }
+    
+    // Tampil Ideal
+    let html = `<div class="section"><h3>Solusi Ideal</h3><div class="table-wrapper"><table><tr><th>Ket</th><th>A+</th><th>A-</th></tr>`;
+    kriteria.forEach((k, j) => {
+        html += `<tr><td>${k.nama}</td><td style="color:blue">${Aplus[j].toFixed(4)}</td><td style="color:red">${Aminus[j].toFixed(4)}</td></tr>`;
+    });
+    document.getElementById("tabelIdeal").innerHTML = html + "</table></div></div>";
+
+    // Hitung Jarak
+    jarak = [];
+    matriksV.forEach((row, i) => {
+        let dp = 0, dm = 0;
+        row.forEach((v, j) => {
+            dp += Math.pow(v - Aplus[j], 2);
+            dm += Math.pow(v - Aminus[j], 2);
+        });
+        jarak.push({ nama: dataKonversi[i].nama, Dplus: Math.sqrt(dp), Dminus: Math.sqrt(dm) });
+    });
+
+    // Tampil Jarak
+    let htmlJ = `<div class="section"><h3>Jarak Solusi</h3><div class="table-wrapper"><table><tr><th>Nama</th><th>D+</th><th>D-</th></tr>`;
+    jarak.forEach(d => htmlJ += `<tr><td>${d.nama}</td><td>${d.Dplus.toFixed(4)}</td><td>${d.Dminus.toFixed(4)}</td></tr>`);
+    document.getElementById("tabelJarak").innerHTML = htmlJ + "</table></div></div>";
+}
+
+function hitungPreferensi() {
+    if (jarak.length === 0) { alert("Hitung jarak dulu!"); return; }
+    
+    hasilAkhir = jarak.map(d => ({ nama: d.nama, Ci: d.Dminus / (d.Dplus + d.Dminus) }));
+    hasilAkhir.sort((a, b) => b.Ci - a.Ci);
+
+    let html = `<div class="section" style="border-top: 5px solid #e74c3c;"><h3>🏆 HASIL PERANGKINGAN</h3><div class="table-wrapper"><table>
+        <tr style="background:#2c3e50; color:white;"><th>Rank</th><th>Nama</th><th>Nilai (V)</th></tr>`;
+    
+    hasilAkhir.forEach((h, i) => {
+        let style = i === 0 ? "font-weight:bold; background:#d4edda;" : "";
+        html += `<tr style="${style}"><td>${i + 1}</td><td>${h.nama}</td><td>${h.Ci.toFixed(6)}</td></tr>`;
+    });
+    document.getElementById("tabelHasilAkhir").innerHTML = html + "</table></div></div>";
+    document.getElementById("tabelHasilAkhir").scrollIntoView({behavior:"smooth"});
+}
+
+</script>
+</body>
+</html>
